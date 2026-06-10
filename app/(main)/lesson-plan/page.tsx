@@ -292,10 +292,11 @@ export default function LessonPlanPage() {
         body: JSON.stringify({ type: "full_lesson", subject: form.subject, grade: form.gradeLevel, topic: form.topic, standards: form.standards }),
       });
       const data = await res.json();
-      if (data.success) setAiSuggestions(data.suggestions);
-      else {
+      if (!res.ok || data.error) {
         const msg = data?.error || "Could not generate suggestions. Please try again.";
         setAiError(msg);
+      } else {
+        setAiSuggestions(data);
       }
     } catch { setAiError("Network error. Please check your connection and try again."); }
     setAiLoading(false);

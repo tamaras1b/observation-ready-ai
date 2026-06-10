@@ -101,7 +101,11 @@ function QuestionCard({ q, answer, onAnswerChange }: {
         body: JSON.stringify({ type: "ipdp_response", question: q.question }),
       });
       const data = await res.json();
-      if (data.success) setAiGuidance(data.suggestions.guidance);
+      if (!res.ok || data.error) {
+        console.error("AI error:", data.error);
+      } else {
+        setAiGuidance(data.guidance || "");
+      }
     } catch {}
     setAiLoading(false);
   };
@@ -224,7 +228,11 @@ function GoalWizard({ onGoalSaved }: { onGoalSaved: (goal: string) => void }) {
       body: JSON.stringify({ type: "ipdp_goal", focusArea }),
     });
     const data = await res.json();
-    if (data.success) setResult(data.suggestions);
+    if (!res.ok || data.error) {
+      console.error("AI goal error:", data.error);
+    } else {
+      setResult(data);
+    }
     setAiLoading(false);
   };
 
