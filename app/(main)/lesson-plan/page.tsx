@@ -90,6 +90,7 @@ interface AISuggestions {
   objectives?: string; hook?: string; instruction?: string;
   guidedPractice?: string; independentPractice?: string;
   closure?: string; assessment?: string; ell?: string; iep?: string; gifted?: string;
+  materials?: string; anticipatedChallenges?: string;
 }
 
 function AISuggestionPanel({ suggestions, onApply, onClose }: {
@@ -108,6 +109,8 @@ function AISuggestionPanel({ suggestions, onApply, onClose }: {
     { key: "ell", label: "ELL Support", emoji: "🌎" },
     { key: "iep", label: "IEP Support", emoji: "♿" },
     { key: "gifted", label: "Enrichment", emoji: "⭐" },
+    { key: "materials", label: "Materials & Resources", emoji: "🎒" },
+    { key: "anticipatedChallenges", label: "Anticipated Challenges", emoji: "⚡" },
   ];
   const available = fields.filter(f => suggestions[f.key as keyof AISuggestions]);
 

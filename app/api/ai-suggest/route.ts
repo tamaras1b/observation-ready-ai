@@ -95,7 +95,9 @@ Return ONLY this JSON structure (no markdown, no extra text):
   "assessment": "string (specific formative assessment strategy to use during the lesson)",
   "ell": "string (2–3 specific ELL/multilingual learner differentiation strategies for this lesson)",
   "iep": "string (2–3 specific strategies for students with IEPs or learning differences)",
-  "gifted": "string (2–3 extension/enrichment ideas for advanced learners)"
+  "gifted": "string (2–3 extension/enrichment ideas for advanced learners)",
+  "materials": "string (list of specific materials, resources, and technology needed for this lesson — e.g. printed passages, manipulatives, whiteboard, Chromebooks, anchor charts)",
+  "anticipatedChallenges": "string (2–3 common student misconceptions or challenges teachers should expect with this topic, plus a specific strategy to address each one)"
 }
 
 Make all suggestions specific to the topic "${topic}" — not generic. Use teacher-friendly, practical language.
@@ -105,7 +107,7 @@ Grade the complexity appropriately for ${gradeBand(grade)}.`;
         model: "gpt-4o-mini",
         messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }],
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: 1800,
         response_format: { type: "json_object" },
       });
       return NextResponse.json(JSON.parse(completion.choices[0].message.content || "{}"));
