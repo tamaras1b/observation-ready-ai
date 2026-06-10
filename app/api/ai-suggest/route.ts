@@ -1,11 +1,37 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
+// ─── Rate Limiter ─────────────────────────────────────────────────────────────
+// Simple in-memory rate limiter: 20 requests per minute per IP
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
+  const now = Date.now();
+  const windowMs = 60_000; // 1 minute
+  const maxRequests = 20;
+
+  const entry = rateLimitStore.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitStore.set(ip, { count: 1, resetAt: now + windowMs });
+    return { allowed: true, remaining: maxRequests - 1 };
+  }
+  if (entry.count >= maxRequests) {
+    return { allowed: false, remaining: 0 };
+  }
+  entry.count++;
+  return { allowed: true, remaining: maxRequests - entry.count };
+}
+
+// Clean up old entries every 5 minutes to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of rateLimitStore.entries()) {
+    if (now > val.resetAt) rateLimitStore.delete(key);
+  }
+}, 300_000);
+
 // ─── OpenAI Client ────────────────────────────────────────────────────────────
-// API key is read from OPENAI_API_KEY environment variable
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ─── Grade band helper ────────────────────────────────────────────────────────
 const gradeBand = (grade: string): string => {
@@ -24,10 +50,24 @@ and ready for classroom use. Always respond with valid JSON only — no markdown
 // ─── POST handler ─────────────────────────────────────────────────────────────
 export async function POST(req: Request) {
   try {
+    // ── Rate limiting ──
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+
+    const { allowed } = checkRateLimit(ip);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a minute before trying again." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { type, subject, grade, topic, standards, focusArea, question, category } = body;
 
-    // Check API key is configured
+    // ── API key check ──
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
         { error: "OpenAI API key is not configured. Please add OPENAI_API_KEY to your environment variables." },
@@ -35,7 +75,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ── Full lesson plan suggestions ──────────────────────────────────────────
+    // ── Full lesson plan ──────────────────────────────────────────────────────
     if (type === "full_lesson") {
       const prompt = `Generate a complete, observation-ready lesson plan for the following:
 
@@ -63,70 +103,52 @@ Grade the complexity appropriately for ${gradeBand(grade)}.`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: prompt },
-        ],
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 1500,
         response_format: { type: "json_object" },
       });
-
-      const result = JSON.parse(completion.choices[0].message.content || "{}");
-      return NextResponse.json(result);
+      return NextResponse.json(JSON.parse(completion.choices[0].message.content || "{}"));
     }
 
     // ── Objectives only ───────────────────────────────────────────────────────
     if (type === "objectives_only") {
       const prompt = `Write 3 SMART learning objectives for:
 Subject: ${subject}, Grade: ${grade} (${gradeBand(grade)}), Topic: ${topic}
-
 Use Bloom's Taxonomy verbs appropriate for this grade level. Make them specific and measurable.
 Return ONLY: { "objectives": ["objective 1", "objective 2", "objective 3"] }`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: prompt },
-        ],
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 300,
         response_format: { type: "json_object" },
       });
-
-      const result = JSON.parse(completion.choices[0].message.content || "{}");
-      return NextResponse.json(result);
+      return NextResponse.json(JSON.parse(completion.choices[0].message.content || "{}"));
     }
 
     // ── Hook only ─────────────────────────────────────────────────────────────
     if (type === "hook_only") {
       const prompt = `Write one engaging lesson hook/opening activity for:
 Subject: ${subject}, Grade: ${grade} (${gradeBand(grade)}), Topic: ${topic}
-
 The hook should take 3–5 minutes, spark curiosity, and connect to students' prior knowledge or real life.
 Return ONLY: { "hook": "description of the hook activity" }`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: prompt },
-        ],
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }],
         temperature: 0.8,
         max_tokens: 250,
         response_format: { type: "json_object" },
       });
-
-      const result = JSON.parse(completion.choices[0].message.content || "{}");
-      return NextResponse.json(result);
+      return NextResponse.json(JSON.parse(completion.choices[0].message.content || "{}"));
     }
 
     // ── Differentiation only ──────────────────────────────────────────────────
     if (type === "differentiation_only") {
       const prompt = `Write differentiation strategies for:
 Subject: ${subject}, Grade: ${grade} (${gradeBand(grade)}), Topic: ${topic}
-
 Return ONLY:
 {
   "ell": "2–3 specific ELL/multilingual learner strategies for this lesson",
@@ -136,17 +158,12 @@ Return ONLY:
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: prompt },
-        ],
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 400,
         response_format: { type: "json_object" },
       });
-
-      const result = JSON.parse(completion.choices[0].message.content || "{}");
-      return NextResponse.json(result);
+      return NextResponse.json(JSON.parse(completion.choices[0].message.content || "{}"));
     }
 
     // ── IPDP SMART Goal ───────────────────────────────────────────────────────
@@ -166,99 +183,56 @@ Return ONLY:
     "Complete SMART goal statement 3 (focused on student impact)"
   ],
   "evidenceIdeas": [
-    "Evidence idea 1",
-    "Evidence idea 2", 
-    "Evidence idea 3",
-    "Evidence idea 4"
+    "Evidence idea 1", "Evidence idea 2", "Evidence idea 3", "Evidence idea 4"
   ]
 }
-
-Goals must sound like a real teacher wrote them — professional, specific, connected to classroom impact.
-Each goal should include a measurable target and a timeframe within the school year.`;
+Goals must sound like a real teacher wrote them — professional, specific, connected to classroom impact.`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: prompt },
-        ],
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 600,
         response_format: { type: "json_object" },
       });
-
-      const result = JSON.parse(completion.choices[0].message.content || "{}");
-      return NextResponse.json(result);
+      return NextResponse.json(JSON.parse(completion.choices[0].message.content || "{}"));
     }
 
     // ── IPDP Response Guidance ────────────────────────────────────────────────
     if (type === "ipdp_response") {
       const prompt = `You are an expert instructional coach. A teacher needs guidance on how to answer this 
-IPDP (Individual Professional Development Plan) question for their formal evaluation.
+IPDP question for their formal evaluation.
 
 Question: "${question}"
 Category: "${category || "Professional Growth"}"
 
-Write guidance that helps them craft a strong, evaluator-ready response. Be specific and practical.
-
 Return ONLY:
 {
-  "guidance": "2–3 paragraphs of coaching advice explaining what evaluators look for, what to include, and how to structure a strong response",
-  "sampleResponse": "A complete, realistic sample response (150–200 words) written as if a teacher wrote it — professional, specific, and strong. Use first person.",
-  "keyPoints": [
-    "Key point 1 to include",
-    "Key point 2 to include",
-    "Key point 3 to include",
-    "Key point 4 to include"
-  ]
+  "guidance": "2–3 paragraphs of coaching advice explaining what evaluators look for and how to structure a strong response",
+  "sampleResponse": "A complete, realistic sample response (150–200 words) written in first person — professional, specific, and strong.",
+  "keyPoints": ["Key point 1", "Key point 2", "Key point 3", "Key point 4"]
 }`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: prompt },
-        ],
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: prompt }],
         temperature: 0.7,
         max_tokens: 700,
         response_format: { type: "json_object" },
       });
-
-      const result = JSON.parse(completion.choices[0].message.content || "{}");
-      return NextResponse.json(result);
+      return NextResponse.json(JSON.parse(completion.choices[0].message.content || "{}"));
     }
 
     return NextResponse.json({ error: "Unknown suggestion type" }, { status: 400 });
 
   } catch (error: unknown) {
     console.error("AI suggest error:", error);
-
-    // Handle OpenAI-specific errors
     if (error && typeof error === "object" && "status" in error) {
-      const apiError = error as { status: number; message?: string };
-      if (apiError.status === 401) {
-        return NextResponse.json(
-          { error: "Invalid API key. Please check your OPENAI_API_KEY environment variable." },
-          { status: 401 }
-        );
-      }
-      if (apiError.status === 429) {
-        return NextResponse.json(
-          { error: "OpenAI rate limit reached. Please wait a moment and try again." },
-          { status: 429 }
-        );
-      }
-      if (apiError.status === 402) {
-        return NextResponse.json(
-          { error: "OpenAI account has insufficient credits. Please add credits at platform.openai.com." },
-          { status: 402 }
-        );
-      }
+      const apiError = error as { status: number };
+      if (apiError.status === 401) return NextResponse.json({ error: "Invalid API key. Please check your OPENAI_API_KEY." }, { status: 401 });
+      if (apiError.status === 429) return NextResponse.json({ error: "AI is busy right now. Please wait a moment and try again." }, { status: 429 });
+      if (apiError.status === 402) return NextResponse.json({ error: "OpenAI account has insufficient credits. Please add credits at platform.openai.com." }, { status: 402 });
     }
-
-    return NextResponse.json(
-      { error: "Something went wrong generating suggestions. Please try again." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong. Please try again in a moment." }, { status: 500 });
   }
 }

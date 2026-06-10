@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { WelcomeBanner } from "@/components/welcome-banner";
 import { motion } from "framer-motion";
 import { FileText, BookOpen, Star, ArrowRight, CheckCircle, Upload, Zap, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +52,7 @@ const tips = [
 export default function DashboardPage() {
   return (
     <div className="p-8">
+      <WelcomeBanner />
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="flex items-center gap-3 mb-2">

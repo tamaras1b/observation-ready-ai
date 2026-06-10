@@ -293,8 +293,11 @@ export default function LessonPlanPage() {
       });
       const data = await res.json();
       if (data.success) setAiSuggestions(data.suggestions);
-      else setAiError("Could not generate suggestions. Please try again.");
-    } catch { setAiError("Network error. Please try again."); }
+      else {
+        const msg = data?.error || "Could not generate suggestions. Please try again.";
+        setAiError(msg);
+      }
+    } catch { setAiError("Network error. Please check your connection and try again."); }
     setAiLoading(false);
   };
 
@@ -364,7 +367,16 @@ export default function LessonPlanPage() {
         </Button>
       </div>
 
-      {aiError && <div className="mb-4 bg-rose-50 border border-rose-200 rounded-lg p-3 text-sm text-rose-700">{aiError}</div>}
+      {aiError && (
+          <div className="mb-4 bg-rose-50 border border-rose-200 rounded-xl p-4 flex gap-3 items-start">
+            <span className="text-rose-400 text-lg flex-shrink-0">⚠️</span>
+            <div>
+              <p className="text-sm font-semibold text-rose-700">AI Suggestion Error</p>
+              <p className="text-sm text-rose-600 mt-0.5">{aiError}</p>
+            </div>
+            <button onClick={() => setAiError("")} className="ml-auto text-rose-300 hover:text-rose-500 flex-shrink-0 text-lg leading-none">&times;</button>
+          </div>
+        )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
