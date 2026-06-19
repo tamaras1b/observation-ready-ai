@@ -1,11 +1,20 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { PWARegister } from "@/components/pwa-register";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
 });
+
+export const viewport: Viewport = {
+  themeColor: "#4f46e5",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 export const metadata: Metadata = {
   title: "Observation Ready AI — Educator Planning Tools",
@@ -14,11 +23,18 @@ export const metadata: Metadata = {
   keywords: ["lesson plan", "IPDP", "teacher tools", "AI lesson planner", "educator", "observation ready", "professional development"],
   authors: [{ name: "Tamand Inc." }],
   creator: "Tamand Inc.",
+  applicationName: "Observation Ready AI",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ObsReady AI",
+    startupImage: "/icons/apple-touch-icon.png",
+  },
   openGraph: {
     title: "Observation Ready AI",
     description:
       "AI-powered educator toolkit — build observation-ready lesson plans and craft professional IPDP responses in minutes.",
-    url: "https://observationreadyai.com",
+    url: "https://observationreadyai.app",
     siteName: "Observation Ready AI",
     type: "website",
     locale: "en_US",
@@ -28,13 +44,16 @@ export const metadata: Metadata = {
     title: "Observation Ready AI",
     description:
       "AI-powered educator toolkit — build observation-ready lesson plans and craft professional IPDP responses in minutes.",
-    creator: "@TamandInc",
   },
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
     shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
   },
+  manifest: "/manifest.webmanifest",
   robots: {
     index: true,
     follow: true,
@@ -44,7 +63,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>{children}</body>
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <PWARegister />
+        {children}
+      </body>
     </html>
   );
 }
