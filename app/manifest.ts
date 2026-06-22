@@ -12,16 +12,11 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "en-US",
     dir: "ltr",
     display: "standalone",
-
-    // tabbed → window-controls-overlay → standalone fallback chain
     display_override: ["tabbed", "window-controls-overlay", "standalone", "minimal-ui", "browser"],
-
-    // Tab strip config for tabbed display mode (multi-document interface)
     tab_strip: {
       home_tab:       { url: "/" },
       new_tab_button: { url: "/lesson-plan" },
     },
-
     orientation: "portrait",
     background_color: "#1e1b4b",
     theme_color: "#4f46e5",
@@ -39,14 +34,43 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "https://www.observationreadyai.app/manifest.webmanifest",
       },
     ],
-
-    // Scope extensions — .well-known/web-app-origin-association validates these
     scope_extensions: [
       { origin: "https://observationreadyai.app" },
       { origin: "https://www.observationreadyai.app" },
     ],
 
-    // Jumplist shortcuts (Windows right-click, Android long-press)
+    // focus-existing: re-use the open tab instead of launching a duplicate
+    // Must be a string — PWABuilder does not support the array form
+    launch_handler: {
+      client_mode: "focus-existing",
+    },
+
+    protocol_handlers: [
+      {
+        protocol: "web+obsready",
+        url: "/?action=%s",
+      },
+    ],
+
+    share_target: {
+      action: "/share-target",
+      method: "GET",
+      enctype: "application/x-www-form-urlencoded",
+      params: {
+        title: "title",
+        text:  "text",
+        url:   "url",
+      },
+    },
+
+    note_taking: {
+      new_note_url: "/lesson-plan",
+    },
+
+    edge_side_panel: {
+      preferred_width: 400,
+    },
+
     shortcuts: [
       {
         name: "New Lesson Plan",
@@ -78,7 +102,6 @@ export default function manifest(): MetadataRoute.Manifest {
       },
     ],
 
-    // File handlers — teachers can open PDFs, Word docs, and text files directly in the app
     file_handlers: [
       {
         action: "/",
@@ -91,34 +114,10 @@ export default function manifest(): MetadataRoute.Manifest {
       },
     ],
 
-    launch_handler: {
-      client_mode: ["focus-existing", "auto"],
-    },
-    protocol_handlers: [
-      {
-        protocol: "web+obsready",
-        url: "/?action=%s",
-      },
-    ],
-    share_target: {
-      action: "/share-target",
-      method: "GET",
-      enctype: "application/x-www-form-urlencoded",
-      params: {
-        title: "title",
-        text:  "text",
-        url:   "url",
-      },
-    },
-    note_taking: {
-      new_note_url: "/lesson-plan",
-    },
-    edge_side_panel: {
-      preferred_width: 400,
-    },
     widgets: [
       {
         name: "Observation Ready AI",
+        short_name: "ObsReady AI",
         description: "Quick access to lesson planning and IPDP tools",
         tag: "obs-ready-widget",
         template: "generic-template",
@@ -140,6 +139,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
+
     screenshots: [
       {
         src: "/icons/screenshot-mobile.png",
