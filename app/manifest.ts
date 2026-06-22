@@ -12,14 +12,14 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "en-US",
     dir: "ltr",
     display: "standalone",
-    display_override: ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+    // tabbed added — lets the app open in a tabbed window on supporting OSes
+    display_override: ["tabbed", "window-controls-overlay", "standalone", "minimal-ui", "browser"],
     orientation: "portrait",
     background_color: "#1e1b4b",
     theme_color: "#4f46e5",
     categories: ["education", "productivity"],
     iarc_rating_id: "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
     prefer_related_applications: false,
-    // Play Store package — update with real listing ID once published
     related_applications: [
       {
         platform: "play",
@@ -31,7 +31,6 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "https://www.observationreadyai.app/manifest.webmanifest",
       },
     ],
-    // Allow the PWA to extend its identity across www and non-www
     scope_extensions: [
       { origin: "https://observationreadyai.app" },
       { origin: "https://www.observationreadyai.app" },
@@ -63,6 +62,38 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
         form_factor: "wide",
         label: "Desktop View",
+      },
+    ],
+    // Register as a note-taking app so the OS can offer "New Note" shortcuts
+    note_taking: {
+      new_note_url: "/lesson-plan",
+    },
+    // Pin to Microsoft Edge sidebar
+    edge_side_panel: {
+      preferred_width: 400,
+    },
+    // Home screen / desktop widget (Windows 11, Android)
+    widgets: [
+      {
+        name: "Observation Ready AI",
+        description: "Quick access to lesson planning and IPDP tools",
+        tag: "obs-ready-widget",
+        template: "generic-template",
+        ms_ac_template: "/widget/template.json",
+        data: "/widget/data.json",
+        type: "application/json",
+        screenshots: [
+          {
+            src: "/icons/icon-512.png",
+            sizes: "512x512",
+            label: "Observation Ready AI Widget",
+          },
+        ],
+        icons: [
+          { src: "/icons/icon-192.png", sizes: "192x192" },
+        ],
+        auth: false,
+        update: 86400,
       },
     ],
   } as MetadataRoute.Manifest;

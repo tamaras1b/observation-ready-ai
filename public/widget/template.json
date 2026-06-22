@@ -1,0 +1,65 @@
+{
+  "type": "AdaptiveCard",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "Container",
+      "style": "emphasis",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "auto",
+              "items": [
+                {
+                  "type": "Image",
+                  "url": "https://www.observationreadyai.app/icons/icon-192.png",
+                  "size": "Small",
+                  "style": "RoundedCorners"
+                }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "${title}",
+                  "weight": "Bolder",
+                  "size": "Medium",
+                  "wrap": true
+                },
+                {
+                  "type": "TextBlock",
+                  "text": "${description}",
+                  "size": "Small",
+                  "wrap": true,
+                  "spacing": "None"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "ActionSet",
+      "actions": [
+        {
+          "type": "Action.OpenUrl",
+          "title": "New Lesson Plan",
+          "url": "https://www.observationreadyai.app/lesson-plan"
+        },
+        {
+          "type": "Action.OpenUrl",
+          "title": "My IPDP",
+          "url": "https://www.observationreadyai.app/ipdp"
+        }
+      ]
+    }
+  ]
+}
