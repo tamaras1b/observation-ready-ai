@@ -63,6 +63,22 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* Inline SW registration — runs before React hydrates so crawlers see it */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function(reg) { console.log('SW registered:', reg.scope); })
+                    .catch(function(err) { console.error('SW error:', err); });
+                });
+              }
+            `,
+          }}
+        />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <PWARegister />
         {children}
