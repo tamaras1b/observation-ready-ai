@@ -1,8 +1,9 @@
 // ─── Observation Ready AI — Service Worker ────────────────────────────────────
-const CACHE_NAME = "obs-ready-ai-v2";
-const SYNC_TAG   = "obs-ready-sync";
+const CACHE_NAME    = "obs-ready-ai-v3";
+const SYNC_TAG      = "obs-ready-sync";
+const PERIODIC_TAG  = "obs-ready-periodic-sync";
 
-// Assets to cache on install (app shell)
+// Assets to pre-cache on install (app shell)
 const PRECACHE_ASSETS = [
   "/",
   "/offline",
@@ -10,7 +11,7 @@ const PRECACHE_ASSETS = [
   "/icons/icon-512.png",
 ];
 
-// ── Install: pre-cache the app shell ─────────────────────────────────────────
+// ── Install ───────────────────────────────────────────────────────────────────
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
@@ -27,24 +28,19 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys
-            .filter((key) => key !== CACHE_NAME)
-            .map((key) => caches.delete(key))
+          keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
         )
       )
       .then(() => self.clients.claim())
   );
 });
 
-// ── Fetch: network-first, fall back to cache, then offline page ───────────────
+// ── Fetch: network-first, fall back to cache → offline page ──────────────────
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   if (!event.request.url.startsWith(self.location.origin)) return;
-
-  // Skip API routes — always go to network for AI suggestions
   if (event.request.url.includes("/api/")) return;
 
-  // Cache-then-network for Next.js internals
   if (event.request.url.includes("/_next/")) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
@@ -52,7 +48,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-first strategy for pages
   event.respondWith(
     fetch(event.request)
       .then((response) => {
@@ -76,22 +71,45 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// ── Background Sync: retry failed saves when back online ─────────────────────
+// ── Background Sync: retry pending saves when connectivity returns ────────────
 self.addEventListener("sync", (event) => {
   if (event.tag === SYNC_TAG) {
-    event.waitUntil(syncPendingData());
+    event.waitUntil(runBackgroundSync());
   }
 });
 
-async function syncPendingData() {
+async function runBackgroundSync() {
   try {
-    // Notify all open tabs that we're back online and syncing
     const clients = await self.clients.matchAll({ type: "window" });
-    clients.forEach((client) => {
-      client.postMessage({ type: "SYNC_COMPLETE", tag: SYNC_TAG });
-    });
+    clients.forEach((client) =>
+      client.postMessage({ type: "SYNC_COMPLETE", tag: SYNC_TAG })
+    );
   } catch (err) {
     console.error("[SW] Background sync failed:", err);
+  }
+}
+
+// ── Periodic Background Sync: refresh cached data once a day ─────────────────
+self.addEventListener("periodicsync", (event) => {
+  if (event.tag === PERIODIC_TAG) {
+    event.waitUntil(runPeriodicSync());
+  }
+});
+
+async function runPeriodicSync() {
+  try {
+    // Re-cache the app shell so the latest version is always available offline
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(PRECACHE_ASSETS);
+
+    // Notify open tabs that a fresh cache is ready
+    const clients = await self.clients.matchAll({ type: "window" });
+    clients.forEach((client) =>
+      client.postMessage({ type: "PERIODIC_SYNC_COMPLETE" })
+    );
+    console.log("[SW] Periodic sync complete — app shell refreshed.");
+  } catch (err) {
+    console.error("[SW] Periodic sync failed:", err);
   }
 }
 
@@ -105,7 +123,6 @@ self.addEventListener("push", (event) => {
     url: "/",
   };
 
-  // Parse push payload if available
   if (event.data) {
     try {
       const payload = event.data.json();
@@ -127,24 +144,21 @@ self.addEventListener("push", (event) => {
   );
 });
 
-// ── Notification click: open or focus the app ─────────────────────────────────
+// ── Notification click ────────────────────────────────────────────────────────
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-
   const targetUrl = (event.notification.data && event.notification.data.url) || "/";
 
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
-        // If app is already open, focus it
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && "focus" in client) {
             client.navigate(targetUrl);
             return client.focus();
           }
         }
-        // Otherwise open a new window
         if (self.clients.openWindow) {
           return self.clients.openWindow(targetUrl);
         }

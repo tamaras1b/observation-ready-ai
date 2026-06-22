@@ -12,7 +12,6 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "en-US",
     dir: "ltr",
     display: "standalone",
-    // tabbed added — lets the app open in a tabbed window on supporting OSes
     display_override: ["tabbed", "window-controls-overlay", "standalone", "minimal-ui", "browser"],
     orientation: "portrait",
     background_color: "#1e1b4b",
@@ -35,6 +34,58 @@ export default function manifest(): MetadataRoute.Manifest {
       { origin: "https://observationreadyai.app" },
       { origin: "https://www.observationreadyai.app" },
     ],
+
+    // ── Single-instance: re-focus the existing tab instead of opening a new one
+    launch_handler: {
+      client_mode: ["focus-existing", "auto"],
+    },
+
+    // ── Custom protocol so links like web+obsready:// open the app directly
+    protocol_handlers: [
+      {
+        protocol: "web+obsready",
+        url: "/?action=%s",
+      },
+    ],
+
+    // ── Receive content shared from other apps (docs, links, text)
+    share_target: {
+      action: "/share-target",
+      method: "GET",
+      enctype: "application/x-www-form-urlencoded",
+      params: {
+        title: "title",
+        text:  "text",
+        url:   "url",
+      },
+    },
+
+    note_taking: {
+      new_note_url: "/lesson-plan",
+    },
+    edge_side_panel: {
+      preferred_width: 400,
+    },
+    widgets: [
+      {
+        name: "Observation Ready AI",
+        description: "Quick access to lesson planning and IPDP tools",
+        tag: "obs-ready-widget",
+        template: "generic-template",
+        ms_ac_template: "/widget/template.json",
+        data: "/widget/data.json",
+        type: "application/json",
+        screenshots: [
+          { src: "/icons/icon-512.png", sizes: "512x512", label: "Observation Ready AI Widget" },
+        ],
+        icons: [
+          { src: "/icons/icon-192.png", sizes: "192x192" },
+        ],
+        auth: false,
+        update: 86400,
+      },
+    ],
+
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
@@ -62,38 +113,6 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
         form_factor: "wide",
         label: "Desktop View",
-      },
-    ],
-    // Register as a note-taking app so the OS can offer "New Note" shortcuts
-    note_taking: {
-      new_note_url: "/lesson-plan",
-    },
-    // Pin to Microsoft Edge sidebar
-    edge_side_panel: {
-      preferred_width: 400,
-    },
-    // Home screen / desktop widget (Windows 11, Android)
-    widgets: [
-      {
-        name: "Observation Ready AI",
-        description: "Quick access to lesson planning and IPDP tools",
-        tag: "obs-ready-widget",
-        template: "generic-template",
-        ms_ac_template: "/widget/template.json",
-        data: "/widget/data.json",
-        type: "application/json",
-        screenshots: [
-          {
-            src: "/icons/icon-512.png",
-            sizes: "512x512",
-            label: "Observation Ready AI Widget",
-          },
-        ],
-        icons: [
-          { src: "/icons/icon-192.png", sizes: "192x192" },
-        ],
-        auth: false,
-        update: 86400,
       },
     ],
   } as MetadataRoute.Manifest;
