@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "com.tamand.observationreadyai",
     name: "Observation Ready AI",
     short_name: "ObsReady AI",
     description:
