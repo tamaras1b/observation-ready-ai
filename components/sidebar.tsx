@@ -8,6 +8,7 @@ import {
   Shield, ScrollText, Mail, Menu, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isPro } from "@/lib/pro-status";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: Home },

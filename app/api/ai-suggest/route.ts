@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
@@ -31,7 +33,7 @@ setInterval(() => {
 }, 300_000);
 
 // ─── OpenAI Client ────────────────────────────────────────────────────────────
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// OpenAI client is initialized lazily inside the handler
 
 // ─── Grade band helper ────────────────────────────────────────────────────────
 const gradeBand = (grade: string): string => {
@@ -49,6 +51,7 @@ and ready for classroom use. Always respond with valid JSON only — no markdown
 
 // ─── POST handler ─────────────────────────────────────────────────────────────
 export async function POST(req: Request) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   try {
     // ── Rate limiting ──
     const ip =

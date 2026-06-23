@@ -20,6 +20,9 @@ import { SaveDialog } from "@/components/save-dialog";
 import { saveIPDPSession } from "@/lib/storage";
 import type { SavedIPDPSession } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import { UpgradeModal } from "@/components/upgrade-modal";
+import { UsageIndicator } from "@/components/usage-indicator";
+import { hasReachedLimit, incrementUsage } from "@/lib/usage-tracker";
 
 // ─── Built-in Questions ───────────────────────────────────────────────────────
 interface IPDPQuestion {
@@ -89,11 +92,13 @@ function QuestionCard({ q, answer, onAnswerChange }: {
   const [open, setOpen]           = useState(false);
   const [copied, setCopied]       = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [aiGuidance, setAiGuidance] = useState("");
 
   const copyText = (text: string) => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
   const handleAIHelp = async () => {
+    if (hasReachedLimit()) { setShowUpgrade(true); return; }
     setAiLoading(true);
     try {
       const res = await fetch("/api/ai-suggest", {
@@ -104,6 +109,7 @@ function QuestionCard({ q, answer, onAnswerChange }: {
       if (!res.ok || data.error) {
         console.error("AI error:", data.error);
       } else {
+        incrementUsage();
         setAiGuidance(data.guidance || "");
       }
     } catch {}
@@ -218,6 +224,7 @@ function QuestionCard({ q, answer, onAnswerChange }: {
 function GoalWizard({ onGoalSaved }: { onGoalSaved: (goal: string) => void }) {
   const [focusArea, setFocusArea] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [result, setResult] = useState<{ goals: string[]; evidenceIdeas: string[]; focusTip: string } | null>(null);
 
   const handleGenerate = async () => {

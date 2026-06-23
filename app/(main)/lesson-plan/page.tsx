@@ -18,6 +18,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SaveDialog } from "@/components/save-dialog";
 import { saveLessonPlan } from "@/lib/storage";
+import { UpgradeModal } from "@/components/upgrade-modal";
+import { UsageIndicator } from "@/components/usage-indicator";
+import { hasReachedLimit, incrementUsage } from "@/lib/usage-tracker";
+import { isPro } from "@/lib/pro-status";
 import type { LessonForm } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
@@ -270,6 +274,7 @@ export default function LessonPlanPage() {
   const [saveOpen, setSaveOpen]     = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const update = (field: keyof LessonForm) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -282,6 +287,7 @@ export default function LessonPlanPage() {
     setForm(prev => ({ ...prev, standards: prev.standards ? prev.standards + "\n" + text : text }));
 
   const handleAISuggest = async () => {
+    if (hasReachedLimit()) { setShowUpgrade(true); return; }
     if (!form.subject || !form.gradeLevel || !form.topic) {
       setAiError("Please fill in Subject, Grade Level, and Topic first.");
       return;
@@ -299,6 +305,7 @@ export default function LessonPlanPage() {
         const msg = data?.error || "Could not generate suggestions. Please try again.";
         setAiError(msg);
       } else {
+        incrementUsage();
         setAiSuggestions(data);
       }
     } catch { setAiError("Network error. Please check your connection and try again."); }
@@ -332,6 +339,7 @@ export default function LessonPlanPage() {
 
   return (
     <div className="p-8 pb-24">
+      <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} onProActivated={() => setShowUpgrade(false)} />
       <AnimatePresence>
         {aiSuggestions && (
           <AISuggestionPanel suggestions={aiSuggestions} onApply={applyAI} onClose={() => setAiSuggestions(null)} />
@@ -365,10 +373,13 @@ export default function LessonPlanPage() {
           <p className="text-sm font-semibold text-indigo-900">AI Lesson Suggestions</p>
           <p className="text-xs text-indigo-700 mt-0.5">Fill in Subject, Grade, and Topic — then click to auto-populate the entire plan.</p>
         </div>
-        <Button onClick={handleAISuggest} disabled={aiLoading} className="bg-indigo-600 hover:bg-indigo-700 gap-2 flex-shrink-0">
-          {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-          {aiLoading ? "Generating..." : "Get AI Suggestions"}
-        </Button>
+        <div className="flex flex-col items-end gap-1.5">
+          <UsageIndicator />
+          <Button onClick={handleAISuggest} disabled={aiLoading} className="bg-indigo-600 hover:bg-indigo-700 gap-2">
+            {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+            {aiLoading ? "Generating..." : "Get AI Suggestions"}
+          </Button>
+        </div>
       </div>
 
       {aiError && (
