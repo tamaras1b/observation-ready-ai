@@ -15,8 +15,8 @@ import Link from "next/link";
 // 2. Go to Products → Add Product → "Observation Ready AI Pro"
 // 3. Add two prices: $6.99/month and $49.99/year
 // 4. Create Payment Links for each → paste the URLs below
-const STRIPE_MONTHLY_URL = "https://buy.stripe.com/REPLACE_WITH_MONTHLY_LINK";
-const STRIPE_ANNUAL_URL  = "https://buy.stripe.com/REPLACE_WITH_ANNUAL_LINK";
+const STRIPE_MONTHLY_URL = "https://buy.stripe.com/dRm4gB8Wx4Fq62a5Wv2B200";
+const STRIPE_ANNUAL_URL  = "https://buy.stripe.com/fZu7sN5Klb3O1LU3On2B201";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FREE_FEATURES = [
