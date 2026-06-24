@@ -17,6 +17,15 @@ import Link from "next/link";
 // 4. Create Payment Links for each → paste the URLs below
 const STRIPE_MONTHLY_URL = "https://buy.stripe.com/dRm4gB8Wx4Fq62a5Wv2B200";
 const STRIPE_ANNUAL_URL  = "https://buy.stripe.com/fZu7sN5Klb3O1LU3On2B201";
+
+// Opens a URL in the device's real browser — required for TWA/Android Play Store compliance.
+// Google Play policy prohibits in-app payment flows; Stripe must open externally.
+function openExternal(url: string) {
+  // In a TWA (Android), window.open with _blank forces the system browser
+  const win = window.open(url, "_blank", "noopener,noreferrer");
+  // Fallback: if pop-up was blocked, navigate directly
+  if (!win) { window.location.href = url; }
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FREE_FEATURES = [
@@ -210,16 +219,14 @@ export default function UpgradePage() {
               </div>
 
               <div className="pt-2">
-                <a
-                  href={stripeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => openExternal(stripeUrl)}
                   className="flex items-center justify-center gap-2 w-full bg-white text-indigo-700 hover:bg-indigo-50 font-semibold rounded-xl py-3 text-sm transition-colors"
                 >
                   <Zap className="h-4 w-4" />
                   Upgrade Now — {billing === "annual" ? "$49.99/yr" : "$6.99/mo"}
                   <ArrowRight className="h-4 w-4" />
-                </a>
+                </button>
                 <p className="text-center text-indigo-200/60 text-xs mt-2">
                   Secure checkout · Cancel anytime
                 </p>
