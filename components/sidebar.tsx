@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   Home, FileText, BookOpen, Star, Zap, Upload,
-  Shield, ScrollText, Mail, Menu, X,
+  Shield, ScrollText, Mail, Menu, X, Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isPro } from "@/lib/pro-status";
@@ -16,6 +16,7 @@ const navItems = [
   { href: "/ipdp", label: "IPDP Assistant", icon: BookOpen },
   { href: "/standards", label: "My Standards & Questions", icon: Upload },
   { href: "/saved", label: "Saved Plans", icon: Star },
+  { href: "/install", label: "Install App", icon: Smartphone },
   { href: "/contact", label: "Contact", icon: Mail },
 ];
 
