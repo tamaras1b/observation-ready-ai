@@ -1,6 +1,6 @@
 // ─── Observation Ready AI — Pro Status & Freemium Limits ─────────────────────
 
-export const FREE_DAILY_LIMIT = 3; // AI suggestions per day on free tier
+export const FREE_DAILY_LIMIT = 1; // AI suggestions per day on free tier (lesson plan + IPDP combined)
 
 // Promo codes Tamara can hand out manually (update as needed)
 const VALID_PROMO_CODES = ["TAMANDPRO2024", "OBSREADY1", "TEACHERPRO"];
