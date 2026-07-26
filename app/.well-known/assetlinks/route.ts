@@ -13,7 +13,7 @@ export async function GET() {
           package_name: "com.tamand.observationreadyai",
           sha256_cert_fingerprints: [
             // Upload key fingerprint (used to sign the AAB you upload to Play Console)
-            "47:57:3C:54:B7:57:22:2A:D0:FA:D8:9E:ED:04:D3:7A:DF:5C:FE:55:A5:4E:BB:85:9E:D5:99:82:1E:22:13:28",
+            "9C:E8:18:64:C2:D0:84:53:86:80:38:4B:33:8D:B6:E9:51:78:C0:4B:46:CD:B4:8F:3A:01:54:5E:11:D4:92:78",
             // NOTE: After uploading to Play Console with Google Play App Signing enabled,
             // go to Play Console → App Integrity → App Signing and add Google's
             // signing certificate SHA-256 fingerprint here as a second entry.
