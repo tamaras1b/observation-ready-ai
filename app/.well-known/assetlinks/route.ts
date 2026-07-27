@@ -10,7 +10,7 @@ export async function GET() {
         relation: ["delegate_permission/common.handle_all_urls"],
         target: {
           namespace: "android_app",
-          package_name: "com.tamand.observationreadyai",
+          package_name: "com.tamand.observationreadyai2",
           sha256_cert_fingerprints: [
             // Upload key fingerprint (used to sign the AAB you upload to Play Console)
             "9C:E8:18:64:C2:D0:84:53:86:80:38:4B:33:8D:B6:E9:51:78:C0:4B:46:CD:B4:8F:3A:01:54:5E:11:D4:92:78",
