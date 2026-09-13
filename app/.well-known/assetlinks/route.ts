@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
 // Serves /.well-known/assetlinks.json
-// Required for TWA (Trusted Web Activity) to remove the browser URL bar
-// The SHA-256 fingerprint must match the Android app signing certificate
+// Required for TWA (Trusted Web Activity) to remove the browser URL bar,
+// and for Google's credential-sharing (Smart Lock / Credential Manager) verification
 export async function GET() {
   return NextResponse.json(
     [
       {
+        // Entry 1: TWA URL-bar removal for the current GLOW-published app
         relation: ["delegate_permission/common.handle_all_urls"],
         target: {
           namespace: "android_app",
@@ -17,6 +18,21 @@ export async function GET() {
             // NOTE: After uploading to Play Console with Google Play App Signing enabled,
             // go to Play Console → App Integrity → App Signing and add Google's
             // signing certificate SHA-256 fingerprint here as a second entry.
+          ],
+        },
+      },
+      {
+        // Entry 2: exact JSON provided by Google Play Console's
+        // "Turn on credential sharing" step (Smart Lock / Credential Manager)
+        relation: [
+          "delegate_permission/common.handle_all_urls",
+          "delegate_permission/common.get_login_creds",
+        ],
+        target: {
+          namespace: "android_app",
+          package_name: "com.tamand.observationreadyai",
+          sha256_cert_fingerprints: [
+            "30:EE:9D:21:80:83:CA:06:5E:1A:F9:AE:17:2B:0E:CB:EE:E6:67:65:F0:F6:22:12:21:A7:D0:3F:15:16:46:F6",
           ],
         },
       },
