@@ -306,7 +306,16 @@ export default function LessonPlanPage() {
         setAiError(msg);
       } else {
         incrementUsage();
-        setAiSuggestions(data);
+        // Normalize any array fields (e.g. "objectives" is returned as a JSON array by the AI)
+        // into plain newline/bullet-joined strings, since the rest of the app (form state,
+        // PDF export) expects every field to be a string.
+        const normalized: AISuggestions = Object.fromEntries(
+          Object.entries(data).map(([key, value]) => [
+            key,
+            Array.isArray(value) ? value.map((v) => `• ${v}`).join("\n") : value,
+          ])
+        );
+        setAiSuggestions(normalized);
       }
     } catch { setAiError("Network error. Please check your connection and try again."); }
     setAiLoading(false);
@@ -325,6 +334,7 @@ export default function LessonPlanPage() {
       await exportLessonPlanPDF(form, form.topic || "Lesson Plan");
     } catch (e) {
       console.error(e);
+      setAiError("Could not export PDF. Please try again, or contact support if this keeps happening.");
     }
     setPdfLoading(false);
   };

@@ -478,7 +478,10 @@ export default function IPDPPage() {
         responses, smartGoals,
       };
       await exportIPDPSessionPDF(session);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      alert("Could not export PDF. Please try again, or contact support if this keeps happening.");
+    }
     setPdfLoading(false);
   };
 

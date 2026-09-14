@@ -51,6 +51,17 @@ const PAGE_H = 297;
 const MARGIN = 18;
 const CONTENT_W = PAGE_W - MARGIN * 2;
 
+// Defensively coerce any unexpected data shape (arrays, numbers, null, etc.)
+// into a safe string before it ever reaches jsPDF or .trim(). This guards
+// against upstream data mismatches (e.g. an AI response field returned as
+// an array instead of a string) silently crashing the export.
+function safeString(value: unknown): string {
+  if (value == null) return "";
+  if (Array.isArray(value)) return value.map((v) => safeString(v)).join("\n");
+  if (typeof value === "string") return value;
+  return String(value);
+}
+
 function splitLines(doc: InstanceType<Awaited<ReturnType<typeof getJsPDF>>>, text: string, maxWidth: number): string[] {
   if (!text) return [];
   return doc.splitTextToSize(text, maxWidth) as string[];
@@ -120,8 +131,9 @@ export async function exportLessonPlanPDF(form: LessonForm, planName: string): P
   y += 7;
 
   // ── Section printer ──
-  const section = (label: string, content: string, accent: [number,number,number] = BRAND) => {
-    if (!content?.trim()) return;
+  const section = (label: string, rawContent: unknown, accent: [number,number,number] = BRAND) => {
+    const content = safeString(rawContent);
+    if (!content.trim()) return;
     y = checkNewPage(doc, y, 18);
 
     // Label pill
@@ -146,8 +158,9 @@ export async function exportLessonPlanPDF(form: LessonForm, planName: string): P
     y += 4;
   };
 
-  const phaseSection = (emoji: string, label: string, time: string, content: string, bg: [number,number,number]) => {
-    if (!content?.trim()) return;
+  const phaseSection = (emoji: string, label: string, time: string, rawContent: unknown, bg: [number,number,number]) => {
+    const content = safeString(rawContent);
+    if (!content.trim()) return;
     y = checkNewPage(doc, y, 20);
 
     // Phase header
@@ -229,7 +242,7 @@ export async function exportLessonPlanPDF(form: LessonForm, planName: string): P
     doc.text(`Page ${p} of ${totalPages}`, PAGE_W - MARGIN, PAGE_H - 7, { align: "right" });
   }
 
-  const filename = (planName || form.topic || "lesson-plan").replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
+  const filename = safeString(planName || form.topic || "lesson-plan").replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
   await savePDFRobust(doc, `${filename}.pdf`);
 }
 
@@ -311,7 +324,8 @@ export async function exportIPDPSessionPDF(session: SavedIPDPSession): Promise<v
     doc.setTextColor(...WHITE);
     doc.text("MY SMART GOALS", MARGIN + 3, y + 0.5);
     y += 9;
-    session.smartGoals.forEach((goal, i) => {
+    session.smartGoals.forEach((rawGoal, i) => {
+      const goal = safeString(rawGoal);
       y = checkNewPage(doc, y, 10);
       doc.setFillColor(...LIGHT);
       const goalLines = splitLines(doc, goal, CONTENT_W - 10);
@@ -336,14 +350,15 @@ export async function exportIPDPSessionPDF(session: SavedIPDPSession): Promise<v
   }
 
   // ── Responses ──
-  const responseEntries = Object.entries(session.responses).filter(([, v]) => v.trim());
+  const responseEntries = Object.entries(session.responses).filter(([, v]) => safeString(v).trim());
   if (responseEntries.length === 0) {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(10);
     doc.setTextColor(...MUTED);
     doc.text("No responses recorded in this session.", MARGIN, y);
   } else {
-    responseEntries.forEach(([qId, answer], i) => {
+    responseEntries.forEach(([qId, rawAnswer], i) => {
+      const answer = safeString(rawAnswer);
       y = checkNewPage(doc, y, 24);
 
       const questionText = IPDP_QUESTIONS_MAP[qId] || qId;
@@ -392,6 +407,6 @@ export async function exportIPDPSessionPDF(session: SavedIPDPSession): Promise<v
     doc.text(`Page ${p} of ${totalPages}`, PAGE_W - MARGIN, PAGE_H - 7, { align: "right" });
   }
 
-  const filename = (session.name || "ipdp-session").replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
+  const filename = safeString(session.name || "ipdp-session").replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
   await savePDFRobust(doc, `${filename}.pdf`);
 }
