@@ -16,6 +16,36 @@ async function getJsPDF() {
   return jsPDF;
 }
 
+// ─── Robust save helper ────────────────────────────────────────────────────────
+// jsPDF's built-in doc.save() creates a blob URL + synthetic <a download> click.
+// This works reliably in normal desktop/mobile browsers, but can silently hang
+// or no-op inside TWA (Trusted Web Activity) / embedded WebView shells like the
+// Android app — there's no full browser download manager UI to catch the click.
+// Web Share API (sharing the file directly) is the standard, reliable fix for
+// TWA/mobile app contexts. We try that first, then fall back to doc.save().
+async function savePDFRobust(doc: InstanceType<Awaited<ReturnType<typeof getJsPDF>>>, filename: string): Promise<void> {
+  try {
+    const blob: Blob = doc.output("blob");
+    const file = new File([blob], filename, { type: "application/pdf" });
+
+    if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.share === "function" &&
+      typeof navigator.canShare === "function" &&
+      navigator.canShare({ files: [file] })
+    ) {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    }
+  } catch (err) {
+    // User cancelling the share sheet also throws — fall through to direct download in that case too.
+    console.warn("Web Share failed or unsupported, falling back to direct download:", err);
+  }
+
+  // Fallback: standard browser download (desktop browsers, and Web Share-unsupported mobile browsers)
+  doc.save(filename);
+}
+
 const PAGE_W = 210; // A4 mm
 const PAGE_H = 297;
 const MARGIN = 18;
@@ -200,7 +230,7 @@ export async function exportLessonPlanPDF(form: LessonForm, planName: string): P
   }
 
   const filename = (planName || form.topic || "lesson-plan").replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
-  doc.save(`${filename}.pdf`);
+  await savePDFRobust(doc, `${filename}.pdf`);
 }
 
 // ─── IPDP Session PDF ─────────────────────────────────────────────────────────
@@ -363,5 +393,5 @@ export async function exportIPDPSessionPDF(session: SavedIPDPSession): Promise<v
   }
 
   const filename = (session.name || "ipdp-session").replace(/[^a-zA-Z0-9\s-]/g, "").trim().replace(/\s+/g, "-");
-  doc.save(`${filename}.pdf`);
+  await savePDFRobust(doc, `${filename}.pdf`);
 }
