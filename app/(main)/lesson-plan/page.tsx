@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SaveDialog } from "@/components/save-dialog";
-import { saveLessonPlan } from "@/lib/storage";
+import { saveLessonPlan, getSavedLessonPlans } from "@/lib/storage";
 import { UpgradeModal } from "@/components/upgrade-modal";
 import { UsageIndicator } from "@/components/usage-indicator";
 import { hasReachedLimit, incrementUsage } from "@/lib/usage-tracker";
@@ -275,6 +275,27 @@ export default function LessonPlanPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [loadedPlanName, setLoadedPlanName] = useState<string | null>(null);
+
+  // ── Load a saved plan when navigated here via "Load & Edit" (?load=<id>) ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const loadId = params.get("load");
+    if (!loadId) return;
+
+    const saved = getSavedLessonPlans().find((p) => p.id === loadId);
+    if (saved) {
+      setForm(saved.form);
+      setLoadedPlanName(saved.name);
+      setGenerated(true);
+      setActiveTab("build");
+    } else {
+      setAiError("Could not find that saved plan. It may have been deleted.");
+    }
+
+    // Clean the URL so refreshing/re-saving doesn't keep re-loading the old plan
+    window.history.replaceState({}, "", "/lesson-plan");
+  }, []);
 
   const update = (field: keyof LessonForm) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -391,6 +412,17 @@ export default function LessonPlanPage() {
           </Button>
         </div>
       </div>
+
+      {loadedPlanName && (
+        <div className="print-hide mb-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex gap-3 items-start">
+          <span className="text-emerald-500 text-lg flex-shrink-0">✅</span>
+          <div>
+            <p className="text-sm font-semibold text-emerald-700">Loaded &ldquo;{loadedPlanName}&rdquo;</p>
+            <p className="text-sm text-emerald-600 mt-0.5">Make your edits below, then save or export again when you're ready.</p>
+          </div>
+          <button onClick={() => setLoadedPlanName(null)} className="ml-auto text-emerald-300 hover:text-emerald-500 flex-shrink-0 text-lg leading-none">&times;</button>
+        </div>
+      )}
 
       {aiError && (
           <div className="mb-4 bg-rose-50 border border-rose-200 rounded-xl p-4 flex gap-3 items-start">
