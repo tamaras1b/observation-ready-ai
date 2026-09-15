@@ -67,3 +67,39 @@
     @apply bg-background text-foreground;
   }
 }
+/* ─── Print styles ─────────────────────────────────────────────────────────────
+   Hides all app chrome (sidebar branding, nav, action buttons, badges) so
+   window.print() / "Print to PDF" produces a clean, unbranded lesson plan
+   document — just the actual content, like a normal printed handout. */
+@media print {
+  .print-hide {
+    display: none !important;
+  }
+
+  /* Remove the app's colored page background and sidebar layout spacing */
+  body,
+  main {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  main {
+    padding-top: 0 !important;
+  }
+
+  /* Let the printable content use the full page width instead of the
+     app's flex layout (which reserves space for the now-hidden sidebar) */
+  .print-full-width {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Flatten card shadows/borders for a cleaner printed page */
+  .print-clean {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

@@ -127,12 +127,12 @@ export function Sidebar() {
   return (
     <>
       {/* ── Desktop sidebar ── */}
-      <aside className="hidden md:flex w-64 min-h-screen border-r bg-gradient-to-b from-indigo-950 to-indigo-900 flex-col flex-shrink-0">
+      <aside className="print-hide hidden md:flex w-64 min-h-screen border-r bg-gradient-to-b from-indigo-950 to-indigo-900 flex-col flex-shrink-0">
         <SidebarContent />
       </aside>
 
       {/* ── Mobile: top bar with hamburger ── */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-indigo-950 border-b border-indigo-800 px-4 py-3 flex items-center gap-3">
+      <div className="print-hide md:hidden fixed top-0 left-0 right-0 z-40 bg-indigo-950 border-b border-indigo-800 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => setMobileOpen(true)}
           className="text-white p-1.5 rounded-lg hover:bg-indigo-800 transition-colors"
@@ -151,7 +151,7 @@ export function Sidebar() {
       {/* ── Mobile: overlay backdrop ── */}
       {mobileOpen && (
         <div
-          className="md:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+          className="print-hide md:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -159,7 +159,7 @@ export function Sidebar() {
       {/* ── Mobile: slide-in drawer ── */}
       <aside
         className={cn(
-          "md:hidden fixed top-0 left-0 z-50 h-full w-72 bg-gradient-to-b from-indigo-950 to-indigo-900 border-r border-indigo-800 transform transition-transform duration-300 ease-in-out",
+          "print-hide md:hidden fixed top-0 left-0 z-50 h-full w-72 bg-gradient-to-b from-indigo-950 to-indigo-900 border-r border-indigo-800 transform transition-transform duration-300 ease-in-out",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

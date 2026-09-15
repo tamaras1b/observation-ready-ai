@@ -195,7 +195,7 @@ function LessonPreview({ form, onSave, onExportPDF, saveSuccess }: {
 }) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="print-hide flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-lg font-semibold text-slate-800">Generated Lesson Plan</h2>
         <div className="flex gap-2">
           <Button
@@ -216,7 +216,7 @@ function LessonPreview({ form, onSave, onExportPDF, saveSuccess }: {
         </div>
       </div>
 
-      <Card className="border-0 shadow-sm bg-white">
+      <Card className="print-clean border-0 shadow-sm bg-white">
         <CardContent className="pt-6 pb-6 space-y-5">
           <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
             <h3 className="text-xl font-bold text-indigo-900">{form.topic || "Untitled Lesson"}</h3>
@@ -364,7 +364,7 @@ export default function LessonPlanPage() {
         type="lesson-plan"
       />
 
-      <div className="mb-6">
+      <div className="print-hide mb-6">
         <div className="flex items-center gap-3 mb-1">
           <div className="w-9 h-9 rounded-xl bg-indigo-500 flex items-center justify-center">
             <FileText className="h-5 w-5 text-white" />
@@ -375,7 +375,7 @@ export default function LessonPlanPage() {
       </div>
 
       {/* AI Banner */}
-      <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200 rounded-xl p-4 mb-6 flex items-center gap-4">
+      <div className="print-hide bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200 rounded-xl p-4 mb-6 flex items-center gap-4">
         <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
           <Zap className="h-5 w-5 text-white" />
         </div>
@@ -404,7 +404,7 @@ export default function LessonPlanPage() {
         )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
+        <TabsList className="print-hide mb-6">
           <TabsTrigger value="build">📝 Build Plan</TabsTrigger>
           <TabsTrigger value="preview" disabled={!generated}>👁️ Preview & Export</TabsTrigger>
         </TabsList>
@@ -544,7 +544,7 @@ export default function LessonPlanPage() {
                   onExportPDF={handleExportPDF}
                   saveSuccess={saveSuccess}
                 />
-                <div className="mt-6 flex gap-3 pb-8">
+                <div className="print-hide mt-6 flex gap-3 pb-8">
                   <Button variant="outline" onClick={() => setActiveTab("build")} className="gap-2">
                     <RefreshCw className="h-4 w-4" /> Edit Plan
                   </Button>
